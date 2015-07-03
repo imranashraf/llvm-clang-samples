@@ -34,9 +34,11 @@ class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
 public:
   MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
-  bool VisitStmt(Stmt *s) {
+  bool VisitStmt(Stmt *s) 
+  {
     // Only care about If statements.
-    if (isa<IfStmt>(s)) {
+    if (isa<IfStmt>(s)) 
+    {
       IfStmt *IfStatement = cast<IfStmt>(s);
       Stmt *Then = IfStatement->getThen();
 
@@ -47,6 +49,10 @@ public:
       if (Else)
         TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
                                true, true);
+    }
+    
+    if (isa<ForStmt>(s)) {
+        llvm::errs() << "** Detected for " << "\n";
     }
 
     return true;

@@ -15,7 +15,7 @@
 # directories of LLVM, Clang in tools/clang/, etc.
 # Alternatively, if you're building vs. a binary download of LLVM, then
 # LLVM_SRC_PATH can point to the main untarred directory.
-LLVM_SRC_PATH := $$HOME/llvm/llvm_svn_rw
+LLVM_SRC_PATH := /data/repositories/llvmRepo/llvm
 
 # LLVM_BUILD_PATH is the directory in which you built LLVM - where you ran
 # configure or cmake.
@@ -25,8 +25,8 @@ LLVM_SRC_PATH := $$HOME/llvm/llvm_svn_rw
 # reflects a debug build with autotools (configure & make), and needs to be
 # changed when a Ninja build is used (see below for example). For linking vs. a
 # binary build of LLVM, point it to the bin/ directory.
-LLVM_BUILD_PATH := $$HOME/llvm/build/svn-make-debug
-LLVM_BIN_PATH := $(LLVM_BUILD_PATH)/Debug+Asserts/bin
+LLVM_BUILD_PATH := /data/repositories/llvmRepo/build
+LLVM_BIN_PATH := $(LLVM_BUILD_PATH)/bin
 
 # Run make BUILD_NINJA=1 to enable these paths
 ifdef BUILD_NINJA
@@ -109,6 +109,7 @@ all: make_builddir \
 	$(BUILDDIR)/access_debug_metadata \
 	$(BUILDDIR)/clang-check \
 	$(BUILDDIR)/rewritersample \
+	$(BUILDDIR)/markerInserter \
 	$(BUILDDIR)/matchers_replacements \
 	$(BUILDDIR)/matchers_rewriter \
 	$(BUILDDIR)/tooling_sample \
@@ -153,6 +154,10 @@ $(BUILDDIR)/clang-check: $(SRC_CLANG_DIR)/ClangCheck.cpp
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
 $(BUILDDIR)/rewritersample: $(SRC_CLANG_DIR)/rewritersample.cpp
+	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
+		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
+
+$(BUILDDIR)/markerInserter: $(SRC_CLANG_DIR)/markerInserter.cpp
 	$(CXX) $(CXXFLAGS) $(LLVM_CXXFLAGS) $(CLANG_INCLUDES) $^ \
 		$(CLANG_LIBS) $(LLVM_LDFLAGS) -o $@
 
@@ -204,3 +209,15 @@ $(BUILDDIR)/try_matcher: $(SRC_CLANG_DIR)/experimental/try_matcher.cpp
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/* *.dot test/*.pyc test/__pycache__
+
+# my test setup
+run:
+	./build/markerInserter ./inputs/test.c
+	
+
+# Given some C/C++ file foo.c:
+# 	clang -S -emit-llvm foo.c
+# Produces foo.ll which is an LLVM IR file
+
+# to execute a pass from the .so file
+# opt -load build/hello_pass.so -hello-funcs -disable-output < ./inputs/test.ll 
